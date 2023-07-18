@@ -6,6 +6,10 @@ const tiendaSchema = Schema({
     type: ObjectId,
     ref: 'Usuario'
   },
+  description: {
+    type: String,
+    default: ''
+  },
   mods: [
     {
       type: ObjectId,
