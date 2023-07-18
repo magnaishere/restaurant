@@ -7,29 +7,34 @@ moment.locale('es');
 const Country = require('country-state-city').Country;
 
 const crearUsuario = async (req, res) => {
-  const { password, email } = req.body;
+  const { password, email, country } = req.body;
   try {
     // buscar por email el Usuario
     const existeEmail = await Usuario.findOne({ email });
     // Si el email existe
     if (existeEmail) {
-      return res.status(400).json({
+      return res.json({
         ok: false,
-        code: 2,
+        code: 1,
       });
     }
     const countries = Country.getAllCountries();
-    const index = countries.findIndex(x => x.name == req.body.country);
+    const index = countries.findIndex(x => x.name == country);
     let input = req.body;
     if (index != -1) {
       input.countryisoCode = countries[index].isoCode;
+    }else{
+      return res.json({
+        ok: false,
+        code: 2,
+      });
     }
     // crea una instancia del usuario
     const usuario = new Usuario(input, { versionKey: false });
 
     const salt = bcrypt.genSaltSync();
     usuario.password = bcrypt.hashSync(password, salt);
-    // console.log(usuario.id);
+
     // Generar el JWT
     const token = await generarJWT(usuario.id);
 
@@ -37,8 +42,8 @@ const crearUsuario = async (req, res) => {
     await usuario.save();
     res.json({
       ok: true,
-      user: usuario,
       token: token,
+      userData: usuario,
     });
   } catch (error) {
     res.status(500).json({

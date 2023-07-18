@@ -48,7 +48,7 @@ const UsuarioSchema = Schema({
     },
     status: {
         type: Number,
-        default: 1 // 1 = activo, 0 = inactivo, 2 = bloqueado
+        default: 0 // 1 = activo, 0 = inactivo, 2 = bloqueado
     }
 });
 UsuarioSchema.method('toJSON', function () {

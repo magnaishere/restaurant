@@ -1,10 +1,10 @@
 
-const { Schema, model } = require("mongoose");
+const { Schema, model, ObjectId } = require("mongoose");
 
 const sesionSchema = Schema({
   user: {
-    type: String,
-    required: true,
+    type: ObjectId,
+    ref: 'Usuario'
   },
   connected_at: {
     type: Date,
@@ -22,7 +22,7 @@ const sesionSchema = Schema({
 
 sesionSchema.method("toJSON", function () {
   const { __v, _id, ...object } = this.toObject();
-  object.uid = _id;
+  object.id = _id;
   return object;
 });
 

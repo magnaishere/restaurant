@@ -5,3 +5,6 @@ Notificaciones
 Errores
 
 0 "Error de base de datos"
+1 "Correo ya registrado"
+2 "Country no válido"
+3 "Cambinacion Email/Clave no válida"
