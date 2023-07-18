@@ -32,17 +32,6 @@ var server = app.listen(app.get('port'), () => {
   console.log('Servidor corriendo en puerto ' + app.get('port'));
 })
 
-// Socket IO
-// var io = require('socket.io')(server, {
-//   cors: {
-//     origin: "*",
-//     methods: ["GET", "POST"]
-//   }, pingTimeout: 120000
-// });
-// app.set('io', io); // agregamos io (el socket) a la api existente
-
-// // Métodos scoket
-// require('./socket')(io);
 
 
 
