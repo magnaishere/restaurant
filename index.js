@@ -19,6 +19,9 @@ app.use(express.static('uploads'));
 app.use('/api/country', require('./routes/country'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/login', require('./routes/auth'));
+app.use('/api/tiendas', require('./routes/tiendas'));
+app.use('/api/categorias', require('./routes/categorias'));
+
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public/index.html'));
