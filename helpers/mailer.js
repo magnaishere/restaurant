@@ -1,5 +1,5 @@
 var nodemailer = require('nodemailer');
-const owner = process.env.SYSTEM_EMAIL;
+const owner = process.env.EMAIL;
 //Creamos el objeto de transporte
 var mailer = nodemailer.createTransport({
     service: "hotmail",

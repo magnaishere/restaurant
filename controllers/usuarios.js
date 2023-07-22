@@ -1,7 +1,8 @@
 const bcrypt = require("bcryptjs/dist/bcrypt");
 const { generarJWT } = require("../helpers/jwt");
+const { makeid } = require("../helpers/commons");
 const Usuario = require("../modelos/usuario");
-const Verficacion = require("../modelos/verificacion");
+const Verificacion = require("../modelos/verificacion");
 const { sendMail } = require("../helpers/mailer");
 var moment = require('moment');
 moment.locale('es');
@@ -49,6 +50,7 @@ const crearUsuario = async (req, res) => {
         });
       });
     } catch (error) {
+      console.log(error);
       res.json({
         ok: false,
         code: 0,
