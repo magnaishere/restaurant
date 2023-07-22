@@ -48,7 +48,7 @@ const login = async (req, res) => {
                 }
             })   
         }else{
-            if (usuario.status==1) {
+            if (usuarioDB.status==1) {
                 return res.json({
                     ok: true,
                     token,
