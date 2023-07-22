@@ -47,18 +47,20 @@ const login = async (req, res) => {
                     status: 0
                 }
             })   
-        }
-        if (usuario.status==1) {
-            return res.json({
-                ok: true,
-                token,
-                userData: await usuarioDB.toJSON()
-            })   
-        }
-        res.json({
-            ok: false,
-            code: 13
-        })
+        }else{
+            if (usuario.status==1) {
+                return res.json({
+                    ok: true,
+                    token,
+                    userData: await usuarioDB.toJSON()
+                })   
+            }else{
+                return res.json({
+                    ok: false,
+                    code: 13
+                })
+            }
+        }       
     } catch (error) {
         return res.json({
             ok: false,
