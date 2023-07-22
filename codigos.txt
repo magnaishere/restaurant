@@ -17,3 +17,4 @@ Errores
 10 "Token vencido"
 11 "No hay token"
 12 "Este usuario no tiene tienda asignada"
+13 "Cuenta no disponible. Contacte con el administrador de sistema"

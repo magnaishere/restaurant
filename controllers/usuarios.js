@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs/dist/bcrypt");
 const { generarJWT } = require("../helpers/jwt");
 const Usuario = require("../modelos/usuario");
+const Verficacion = require("../modelos/verificacion");
+const { sendMail } = require("../helpers/mailer");
 var moment = require('moment');
 moment.locale('es');
 
@@ -34,215 +36,112 @@ const crearUsuario = async (req, res) => {
 
     const salt = bcrypt.genSaltSync();
     usuario.password = bcrypt.hashSync(password, salt);
-
-    // Generar el JWT
-    const token = await generarJWT(usuario.id);
-
     // Para grabar en la base de datos
     await usuario.save();
-    res.json({
-      ok: true,
-      token: token,
-      userData: usuario,
+    const code = makeid(6);
+    const userDB = await usuario.toJSON();
+    const verify = new Verificacion({ user: userDB.id, code }, { versionKey: false });
+    await verify.save();
+    sendMail(userDB.email, "Verificación de cuenta Creaciones Maya", "Has creado una cuenta de Creaciones Maya correctamente. Ahora con el siguiente código podrás confirmar tu cuenta: </p><br /><br /><h1>"+code+"</h1><br /><br /><p>", "simple").then((r)=>{
+        res.json({
+          ok: true,
+          email: usuario.email
+        });
+      });
+    } catch (error) {
+      res.json({
+        ok: false,
+        code: 0,
+      });
+    }
+};
+
+const verifyAgain = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const existeEmail = await Usuario.findOne({ email });
+    // Si el email existe
+    if (!existeEmail) {
+      return res.json({
+        ok: false,
+        code: 17,
+      });
+    }
+    const code = makeid(6);
+    const verify = new Verificacion({ user: existeEmail._id, code }, { versionKey: false });
+    await verify.save();
+    sendMail(existeEmail.email, "Verificación de cuenta Creaciones Maya", "Has creado una cuenta de Creaciones Maya correctamente. Ahora con el siguiente código podrás confirmar tu cuenta: </p><br /><br /><h1>"+code+"</h1><br /><br /><p>", "simple").then((r)=>{
+      res.json({
+        ok: true
+      });
     });
   } catch (error) {
-    res.status(500).json({
+    console.log(error);
+    res.json({
+      ok: false,
+      code: 0,
+    });
+  }
+};
+const verifyAccount  = async (req, res) => {
+  const { code, email } = req.body;
+  try {
+    // buscar por email el Usuario
+    const existeEmail = await Usuario.findOne({ email });
+    // Si el email existe
+    if (!existeEmail) {
+      return res.json({
+        ok: false,
+        code: 17,
+      });
+    }
+    const verificationDB = await Verificacion.findOne({ code: code, user: existeEmail._id, completed: false });
+    if (!verificationDB) {
+      return res.json({
+        ok: false,
+        code: 18,
+      });
+    }
+    if (Date.now() > verificationDB.expire_at) {
+        return res.json({
+            ok: false,
+            code: 19
+        })
+    }
+    verificationDB.completed = true;
+    await verificationDB.save();
+    existeEmail.status = 1;
+    await existeEmail.save();
+    const token = await generarJWT(existeEmail._id);
+    const existeSesion = await Sesion.findOne({ id: existeEmail._id, closed: false });
+    if (existeSesion) {
+        let { closed, ...campos } = existeSesion.toJSON();
+        campos.closed = true;
+        await Sesion.findByIdAndUpdate(existeSesion.id, campos, {
+            new: true,
+        });
+    }
+    new Sesion({ user: existeEmail._id, token: token }, { versionKey: false });
+    sendMail(existeEmail.email, "Bienvenido a Creaciones Maya", "Has confirmado tu dirección de correo correctamente. Disfruta de los productos y servicios que ofrecemos. Recuerda que puedes visitarnos en instagram.", "simple").then(async (r)=>{
+      res.json({
+        ok: true,
+        user: await existeEmail.toJSON(),
+        token: token,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
       ok: false,
       code: 0,
     });
   }
 };
 
-// const actualizarUsuario = async (req, res) => {
-//   const uid = req.params.id;
-//   try {
-//     //Actualizaciones
-//     let { password, google, email, img, ...campos } = req.body;
-//     // buscar  Usuario por id
-//     const usuarioDB = await Usuario.findById(uid);
-//     // Verificar si el usuario existe en DB
-//     if (!usuarioDB) {
-//       return res.status(404).json({
-//         ok: false,
-//         code : 6,
-//       });
-//     }
-
-//     const existeEmail = await Usuario.findOne({ email });
-//     if (existeEmail && existeEmail.id != uid) {
-//       return res.status(400).json({
-//         ok: false,
-//         code : 1,
-//       });
-//     }
-
-//     // Solo si no es un usuario de google
-//     if (!usuarioDB.google) {
-//       campos.email = email;
-//     } else if (usuarioDB.email !== email) {
-//       return res.status(400).json({
-//         ok: false,
-//         code : 7,
-//       });
-//     }
-//     const countries = Country.getAllCountries();
-//     const index = countries.findIndex(x => x.name == campos.country);
-//     if (index != -1) {
-//       campos.countryisoCode = countries[index].isoCode;
-//     }
-//     if (img) {
-//       const reg = new RegExp(
-//         "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
-//       );
-//       let block = img.split(";base64,");
-//       if (!reg.test(block[1])) {
-//         return res.status(500).json({
-//           ok: false,
-//           code : 3,
-//         });
-//       }
-//       if (block[1].charAt(0) != 'i' && block[1].charAt(0) != '/') {
-//         return res.status(500).json({
-//           ok: false,
-//           code : 4,
-//         });
-//       }
-//       if (usuarioDB.img) {
-//         var imgURL = usuarioDB.img.split("/");
-//         removeFolder(`/${imgURL[1]}/${imgURL[2]}`);
-//       }
-//       const path = "/usuarios/" + uid;
-//       const filename = uid + "_usuario";
-//       base64ToFile(img, path, filename).then(async (base64ToFileRes) => {
-//         if (base64ToFileRes.status == "success") {
-//           campos.img = base64ToFileRes.finalpath;
-//           const usuarioActualizado = await Usuario.findByIdAndUpdate(
-//             uid,
-//             campos,
-//             { new: true }
-//           );
-//           res.json({
-//             ok: true,
-//             user: usuarioActualizado,
-//           });
-//         } else {
-//           console.log(base64ToFileRes.message);
-//           return res.status(500).json({ ok: false, msg: "Error inesperado" });
-//         }
-//       });
-//     } else {
-//       const usuarioActualizado = await Usuario.findByIdAndUpdate(uid, campos, {
-//         new: true,
-//       });
-
-//       res.json({
-//         ok: true,
-//         user: usuarioActualizado,
-//       });
-//     }
-//   } catch (error) {
-//     res.status(500).json({
-//       ok: false,
-//       code : 0,
-//     });
-//   }
-// };
-
-// const actualizarPerfilUsuario = async (req, res) => {
-//   const uid = req.params.id;
-//   try {
-//     let { password, google, email, img, ...campos } = req.body;
-//     const usuarioDB = await Usuario.findById(uid);
-//     if (!usuarioDB) {
-//       return res.status(400).json({
-//         ok: false,
-//         code: 1,
-//       });
-//     }
-//     if (!usuarioDB.google) {
-//       campos.email = email;
-//     } else if (usuarioDB.email !== email) {
-//       return res.status(400).json({
-//         ok: false,
-//         code: 7,
-//       });
-//     }
-//     const existeEmail = await Usuario.findOne({ email });
-//     if (existeEmail && existeEmail.id != uid) {
-//       return res.status(400).json({
-//         ok: false,
-//         code: 1,
-//       });
-//     }
-//     const countries = Country.getAllCountries();
-//     const index = countries.findIndex(x => x.name == campos.country);
-//     if (index != -1) {
-//       campos.countryisoCode = countries[index].isoCode;
-//     }
-//     if (password) {
-//       const salt = bcrypt.genSaltSync();
-//       campos.password = bcrypt.hashSync(password, salt);
-//     }
-//     if (img) {
-//       const reg = new RegExp(
-//         "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
-//       );
-//       let block = img.split(";base64,");
-//       if (!reg.test(block[1])) {
-//         return res.status(500).json({
-//           ok: false,
-//           code: 3,
-//         });
-//       }
-//       if (block[1].charAt(0) != 'i' && block[1].charAt(0) != '/') {
-//         return res.status(500).json({
-//           ok: false,
-//           code: 4,
-//         });
-//       }
-//       if (usuarioDB.img) {
-//         var imgURL = usuarioDB.img.split("/");
-//         removeFolder(`/${imgURL[1]}/${imgURL[2]}`);
-//       }
-//       const path = "/usuarios/" + usuarioDB._id;
-//       const filename = usuarioDB._id + "_usuario";
-//       base64ToFile(img, path, filename).then(async (base64ToFileRes) => {
-//         if (base64ToFileRes.status == "success") {
-//           campos.img = base64ToFileRes.finalpath;
-
-//           const usuarioActualizado = await Usuario.findByIdAndUpdate(
-//             usuarioDB._id,
-//             campos,
-//             { new: true }
-//           );
-
-//           res.json({
-//             ok: true,
-//             user: password ? await { token: await generarJWT(usuarioDB._id), ...usuarioActualizado.toCustomA() } : await usuarioActualizado.toCustomA(),
-//           });
-//         } else {
-//           return res.status(500).json({ ok: false, code: 0 });
-//         }
-//       });
-//     } else {
-//       const usuarioActualizado = await Usuario.findByIdAndUpdate(usuarioDB._id, campos, {
-//         new: true,
-//       });
-//       res.json({
-//         ok: true,
-//         user: password ? await { token: await generarJWT(usuarioDB._id), ...usuarioActualizado.toCustomA() } : await usuarioActualizado.toCustomA(),
-//       });
-//     }
-//   } catch (error) {
-//     res.status(500).json({
-//       ok: false,
-//       code: 0,
-//     });
-//   }
-// };
-
 module.exports = {
   crearUsuario,
+  verifyAccount,
+  verifyAgain,
   // actualizarUsuario,
   // actualizarPerfilUsuario,
 };

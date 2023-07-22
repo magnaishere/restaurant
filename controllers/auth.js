@@ -39,11 +39,25 @@ const login = async (req, res) => {
 
         const usuario = new Sesion({ user: usuarioDB._id, token: token }, { versionKey: false });
         await usuario.save();
-        
-        return res.json({
-            ok: true,
-            token,
-            userData: await usuarioDB.toJSON()
+        if (usuarioDB.status==0) {
+            return res.json({
+                ok: true,
+                userData: {
+                    email: usuarioDB.email,
+                    status: 0
+                }
+            })   
+        }
+        if (usuario.status==1) {
+            return res.json({
+                ok: true,
+                token,
+                userData: await usuarioDB.toJSON()
+            })   
+        }
+        res.json({
+            ok: false,
+            code: 13
         })
     } catch (error) {
         return res.json({
