@@ -12,10 +12,23 @@ const {check} = require('express-validator');
 // Middleware personalizado
 const { validarCampos } = require('../middlewares/validar-campos')
  
-const { crearUsuario } = require('../controllers/usuarios');
+const { verifyAccount, verifyAgain, crearUsuario } = require('../controllers/usuarios');
 const { validarJWT, validarADMIN_ROLE, validarADMIN_ROLE_o_MismoUsuario } = require('../middlewares/validar-jwt');
 
 const router = Router();
+
+// verificar usuario
+router.post('/verify',[
+    check('code', 'El código es Obligatorio').not().isEmpty(),
+    check('email', 'El email es Obligatorio').isEmail(),
+    validarCampos
+], verifyAccount);
+
+// verificar usuario
+router.post('/otro/verify',[
+    check('email', 'El email es Obligatorio').isEmail(),
+    validarCampos
+], verifyAgain);
 
 // crear usuario
 router.post('/',[
