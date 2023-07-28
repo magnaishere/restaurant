@@ -3,6 +3,7 @@ const { generarJWT } = require("../helpers/jwt");
 const { makeid } = require("../helpers/commons");
 const Usuario = require("../modelos/usuario");
 const Verificacion = require("../modelos/verificacion");
+const Sesion = require("../modelos/sesion");
 const { sendMail } = require("../helpers/mailer");
 var moment = require('moment');
 moment.locale('es');
