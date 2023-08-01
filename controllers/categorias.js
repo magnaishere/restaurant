@@ -39,7 +39,7 @@ const crearCategoria = async (req, res) => {
       code: 4,
     });
   }
-  const categoriaDB = await Categoria.findOne({ title });
+  const categoriaDB = await Categoria.findOne({ title, store: tiendaDB._id });
   if (!categoriaDB) {
     const cat = new Categoria({ title : title, store: tiendaDB._id }, { versionKey: false });
     await cat.save();
