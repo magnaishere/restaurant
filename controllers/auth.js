@@ -49,23 +49,19 @@ const login = async (req, res) => {
                 }
             })   
         }else{
+            let exit = await usuarioDB.toJSON();
             if (usuarioDB.status==1) {
                 const tiendaDB = await Tienda.findOne({ admin: usuarioDB._id });
                 if (tiendaDB) {
-                    return res.json({
-                        ok: true,
-                        token,
-                        userData: await usuarioDB.toJSON(),
-                        store: tiendaDB._id
-                    })    
+                    exit.store = tiendaDB._id;   
                 }else{
-                    return res.json({
-                        ok: true,
-                        token,
-                        userData: await usuarioDB.toJSON(),
-                        store: false
-                    })    
+                    exit.store = false; 
                 }
+                return res.json({
+                    ok: true,
+                    token,
+                    userData: exit
+                })   
             }else{
                 return res.json({
                     ok: false,

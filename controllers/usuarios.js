@@ -4,6 +4,7 @@ const { makeid } = require("../helpers/commons");
 const Usuario = require("../modelos/usuario");
 const Verificacion = require("../modelos/verificacion");
 const Sesion = require("../modelos/sesion");
+const Tienda = require("../modelos/tienda");
 const { sendMail } = require("../helpers/mailer");
 var moment = require('moment');
 moment.locale('es');
@@ -126,9 +127,16 @@ const verifyAccount  = async (req, res) => {
     }
     new Sesion({ user: existeEmail._id, token: token }, { versionKey: false });
     sendMail(existeEmail.email, "Bienvenido a Creaciones Maya", "Has confirmado tu dirección de correo correctamente. Disfruta de los productos y servicios que ofrecemos. Recuerda que puedes visitarnos en instagram.", "simple").then(async (r)=>{
+      let exit = await existeEmail.toJSON();
+      const tiendaDB = await Tienda.findOne({ admin: existeEmail._id });
+      if (tiendaDB) {
+          exit.store = tiendaDB._id;   
+      }else{
+          exit.store = false; 
+      }
       res.json({
         ok: true,
-        user: await existeEmail.toJSON(),
+        userData: exit,
         token: token,
       });
     });
