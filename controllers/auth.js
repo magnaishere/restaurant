@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs/dist/bcrypt');
 // Para tener las ayudas de express pero no es necesario
 const { generarJWT } = require('../helpers/jwt');
 const Usuario = require('../modelos/usuario');
+const Tienda = require('../modelos/tienda');
 const { makeid } = require('../helpers/commons');
 const Recuperacion = require('../modelos/recuperacion');
 const Sesion = require('../modelos/sesion');
@@ -73,6 +74,7 @@ const login = async (req, res) => {
             }
         }       
     } catch (error) {
+        console.log(error);
         return res.json({
             ok: false,
             code: 0
