@@ -18,10 +18,14 @@ const { crearTienda,
     actualizarTienda,
     desactivarTienda,
     activarTienda, 
-    obtenerMiTienda } = require('../controllers/tiendas');
+    obtenerMiTienda,
+    obtenerUnaTienda } = require('../controllers/tiendas');
 const { validarJWT, validarAdminStore, validarADMIN_ROLE, validarADMIN_ROLE_o_MismoUsuario } = require('../middlewares/validar-jwt');
 
 const router = Router();
+
+router.get('/:id', obtenerUnaTienda);
+
 
 router.get('/mi-tienda/:id', [validarJWT, validarAdminStore], obtenerMiTienda);
 

@@ -118,10 +118,26 @@ const obtenerMiTienda = async (req, res) => {
   });   
 };
 
+const obtenerUnaTienda = async (req, res) => {
+  const id = req.params.id;
+  const tiendaDB = await Tienda.findById(id);
+  if (!tiendaDB) {
+    return res.json({
+      ok: false,
+      code: 4,
+    });
+  }
+  res.json({
+    ok: true,
+    store: await tiendaDB.toJSON()
+  });   
+};
+
 module.exports = {
   crearTienda,
   actualizarTienda,
   desactivarTienda,
   activarTienda,
-  obtenerMiTienda
+  obtenerMiTienda,
+  obtenerUnaTienda
 };
